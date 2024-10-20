@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Login</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<form id="loginForm">
+    <input type="text" name="login_id" id="login_id" placeholder="Id" />
+    <input type="password" name="password" id="password" placeholder="Password" />
+    <button type="submit">Login</button>
+</form>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('#loginForm').on('submit', function(e) {
+            e.preventDefault();  // 폼의 기본 동작을 막음
+
+            // JSON 형식으로 데이터 전송
+            $.ajax({
+                type: 'POST',
+                url: '/login',
+                contentType: 'application/json',  // JSON 데이터 전송
+                data: JSON.stringify({
+                    login_id: $('#login_id').val(),
+                    password: $('#password').val()
+                }),
+                success: function(response) {
+                    alert('Login successful');
+                },
+                error: function(xhr, status, error) {
+                    alert('Error: ' + xhr.responseText);
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
