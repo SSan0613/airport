@@ -32,8 +32,8 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)  // CSRF 보호 비활성화 (필요할 경우)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/register").permitAll()  // 로그인, 회원가입은 모두 접근 가능
-                        .requestMatchers("/secure-resource").authenticated()  // 이 경로는 인증된 사용자만 접근 가능
+                        .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()  // 로그인, 회원가입은 모두 접근 가능
+                        .requestMatchers("/api/auth/secure-resource").authenticated()  // 이 경로는 인증된 사용자만 접근 가능
                         .anyRequest().permitAll()  // 모든 요청에 대해 인증 없이 접근 허용
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)  // JWT 필터 추가
@@ -48,6 +48,6 @@ public class SecurityConfig {
     }
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return NoOpPasswordEncoder.getInstance();       //임시임. 비밀번호 암호화 필요함.
+        return new BCryptPasswordEncoder();      //임시임. 비밀번호 암호화 필요함.
     }
 }

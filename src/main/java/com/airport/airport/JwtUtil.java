@@ -20,14 +20,14 @@ public class JwtUtil {
 
     private final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);  // 안전한 비밀키 자동 생성
 
-    // JWT 토큰 생성
+    //토큰 생성 메소드
     public String generateToken(String username) {
         long expirationTime = 1000 * 60 * 60;  // 1시간 유효 토큰
         try {
             return Jwts.builder()
                     .setSubject(username)
                     .setIssuedAt(new Date())
-                    .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
+                    .setExpiration(new Date(System.currentTimeMillis() + expirationTime))   //1시간 유효함.
                     .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
                     .compact();
         } catch (Exception e) {
@@ -41,6 +41,13 @@ public class JwtUtil {
         return extractAllClaims(token).getSubject();
     }
 
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .setSigningKey(SECRET_KEY)
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
     public boolean validateToken(String token, String username) {
         String extractedUsername = extractUsername(token);
         return (extractedUsername.equals(username) && !isTokenExpired(token));
@@ -51,11 +58,5 @@ public class JwtUtil {
         return extractAllClaims(token).getExpiration().before(new Date());
     }
 
-    private Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
-                .parseClaimsJws(token)
-                .getBody();
-    }
 
 }

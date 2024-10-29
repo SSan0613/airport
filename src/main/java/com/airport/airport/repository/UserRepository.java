@@ -10,5 +10,6 @@ import java.util.List;
 @Repository
 public interface UserRepository extends JpaRepository<User,Long>{
 
-    User findByLoginId(String Id);
+    User findByEmail(String email);   //사용자 반환
+    boolean existsByEmail(String email);  //사용자 중복확인
 }

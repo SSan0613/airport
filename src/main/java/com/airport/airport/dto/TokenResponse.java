@@ -4,11 +4,11 @@ import lombok.Data;
 
 @Data
 public class TokenResponse {
-    private String token;
+    private String jwt;
     private long expiresIn;
 
-    public TokenResponse(String token, long expiresIn) {
-        this.token = token;
+    public TokenResponse(String jwt, long expiresIn) {
+        this.jwt = jwt;
         this.expiresIn = expiresIn;
     }
 }

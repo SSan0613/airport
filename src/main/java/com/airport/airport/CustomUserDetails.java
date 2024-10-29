@@ -19,7 +19,7 @@ public class CustomUserDetails implements UserDetails {
     }
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
+    public Collection<? extends GrantedAuthority> getAuthorities() {        //나중에 관리자, 사용자 권한 지정 하면 추가.
         return Collections.EMPTY_LIST;
     }
 
@@ -30,6 +30,6 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {   //로그인 시 아이디 반환임.
-        return user.getLoginId();
+        return user.getUsername();
     }
 }
