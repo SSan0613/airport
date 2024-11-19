@@ -4,6 +4,10 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @RequiredArgsConstructor
@@ -25,6 +29,9 @@ public class User {
     @Column
     private String email;
 
+    @OneToMany(mappedBy = "user")
+    private List<Comment> comments = new ArrayList<>();
+
     public User() {
 
     }
@@ -33,5 +40,9 @@ public class User {
         this.username = username;
         this.password=password;
         this.email = email;
+    }
+
+    public void changePassword(String newpassword, PasswordEncoder passwordEncoder) {
+        this.password = passwordEncoder.encode(newpassword);
     }
 }

@@ -6,12 +6,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import java.net.URLConnection;
 import java.security.Key;
-import java.util.UUID;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Date;
 
 @Component
@@ -37,20 +32,20 @@ public class JwtUtil {
     }
 
     // 토큰에서 사용자 이름 추출
-    public String extractUsername(String token) {
+    public String extractEmail(String token) {
         return extractAllClaims(token).getSubject();
     }
 
-    private Claims extractAllClaims(String token) {
+    private Claims extractAllClaims(String token) { //비밀키로 토큰해석
         return Jwts.parser()
                 .setSigningKey(SECRET_KEY)
                 .parseClaimsJws(token)
                 .getBody();
     }
 
-    public boolean validateToken(String token, String username) {
-        String extractedUsername = extractUsername(token);
-        return (extractedUsername.equals(username) && !isTokenExpired(token));
+    public boolean validateToken(String token, String email) {   //토큰 검증
+        String extractedEmail = extractEmail(token);
+        return (extractedEmail.equals(email) && !isTokenExpired(token));
     }
 
     // 토큰의 만료 여부 확인
