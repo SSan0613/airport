@@ -118,7 +118,7 @@ public class UserController {
 
             for (FieldError fieldError : bindingResult.getFieldErrors()) {  //@valid에서 터진 예외 전부 처리(비밀번호 숫자, 공백, 이메일 형식 등) (400)
                 String defaultMessage = fieldError.getDefaultMessage();
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message","defaultMessage"));
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message",defaultMessage));
             }
         }
         return null;
