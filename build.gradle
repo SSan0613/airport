@@ -3,13 +3,16 @@ plugins {
 	id 'org.springframework.boot' version '3.3.4'
 	id 'io.spring.dependency-management' version '1.1.6'
 }
+ext {
+	springCloudGcpVersion = "5.8.0"
+}
 
 group = 'com.airport'
 version = '0.0.1-SNAPSHOT'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(21)
 	}
 }
 
@@ -28,14 +31,21 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-
+	implementation 'com.google.cloud:google-cloud-storage'
+	implementation 'com.google.cloud:spring-cloud-gcp-starter-storage'
+	implementation 'com.google.cloud:spring-cloud-gcp-starter'
+	implementation 'com.google.cloud:spring-cloud-gcp-starter-pubsub'
+	implementation 'com.github.haifengl:smile-core:2.6.0'
+	implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+	implementation 'org.locationtech.jts:jts-core:1.19.0'
+	implementation 'com.opencsv:opencsv:5.7.1'
 	implementation 'com.auth0:java-jwt:4.0.0'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-//	testImplementation 'org.springframework.security:spring-security-test'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
@@ -44,9 +54,15 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // JSON 파싱을 위한 Jackson 추가
 }
 
+dependencyManagement {
+	imports {
+		mavenBom "com.google.cloud:spring-cloud-gcp-dependencies:$springCloudGcpVersion"
+	}
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
 }
-tasks.withType(JavaCompile) {
-	options.compilerArgs << "-parameters"
+tasks.withType(JavaCompile).configureEach {
+	options.compilerArgs.add("-parameters")
 }

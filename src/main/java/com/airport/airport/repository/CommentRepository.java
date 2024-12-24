@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-  List<Comment> findByRoute_RouteIdOrderByUpdatedTimeDesc(Long routeId);
+  List<Comment> findByRoute_RouteIdOrderByUpdatedTimeDesc(String routeId);
 
   boolean existsByCommentId(Long commentId);  //사용자 중복확인
 

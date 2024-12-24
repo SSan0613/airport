@@ -59,14 +59,13 @@ public class GcsController {
     }
 
 
-     //경로 정보 조회 API
-   // @GetMapping("/routes/{dongCode}")
-    //public ResponseEntity<Map<String, Object>> getRoutes(
-      //      @PathVariable String dongCode,
-        //    @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") String date) {
-       // Map<String, Object> response = gcsService.getPopularRoutesToAirport(date, dongCode);
-       // return ResponseEntity.ok(response);
-   // }
+    // 경로 정보 조회 API
+    @GetMapping("/routes/{dongCode}")
+    public ResponseEntity<Map<String, Object>> getRoutes(
+            @PathVariable String dongCode) {
+        Map<String, Object> response = gcsService.getPopularRoutesToAirport(dongCode);
+        return ResponseEntity.ok(response);
+    }
 
     // 새로운 엔드포인트 추가 (전체 기간 조회)
     @GetMapping("/routes/all/{dongCode}")

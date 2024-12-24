@@ -93,8 +93,8 @@ public class CommentService {
     }
 */
 
-    public RouteCommentsResponse getCommentsByRouteId(Long route_id, String useremail) throws IllegalAccessException {
-        if (!routeRepository.existsById(route_id)) {
+    public RouteCommentsResponse getCommentsByRouteId(String route_id, String useremail) throws IllegalAccessException {
+        if (!routeRepository.existsByRouteId(route_id)) {
             throw new IllegalAccessException("존재하지 않는 경로입니다");
         }
         Route route = routeRepository.findByRouteId(route_id);
@@ -135,7 +135,7 @@ public class CommentService {
         return new RouteCommentsResponse(positive, negative,like_status,comments);
     }
 
-    public void addComment(Long routeId, String useremail, CommentRequest commentRequest) {
+    public void addComment(String routeId, String useremail, CommentRequest commentRequest) {
         Route route = routeRepository.findByRouteId(routeId);  //예외처리 필요
         User user = userRepository.findByEmail(useremail);      //예외처리 필요
 
@@ -168,8 +168,8 @@ public class CommentService {
         commentRepository.deleteById(commentId);
     }
 
-    public Map<String,Object> recommendRoute(Long routeId, String useremail) {
-        if (!routeRepository.existsById(routeId)) {
+    public Map<String,Object> recommendRoute(String routeId, String useremail) {
+        if (!routeRepository.existsByRouteId(routeId)) {
             throw new IllegalArgumentException("잘못된 접근(route_id) 존재 x");            //나중에 최적화 하기
         }
         Route route = routeRepository.findByRouteId(routeId);
@@ -209,8 +209,8 @@ public class CommentService {
         return response;
     }
 
-    public Map<String,Object> notRecommendRoute(Long routeId, String useremail) {
-        if (!routeRepository.existsById(routeId)) {
+    public Map<String,Object> notRecommendRoute(String routeId, String useremail) {
+        if (!routeRepository.existsByRouteId(routeId)) {
             throw new IllegalArgumentException("잘못된 접근(route_id) 존재 x");            //나중에 최적화 하기
         }
         Route route = routeRepository.findByRouteId(routeId);

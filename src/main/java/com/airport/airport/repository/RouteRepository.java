@@ -8,6 +8,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface RouteRepository extends JpaRepository<Route, Long> {
    // @Query("SELECT r FROM Route r WHERE r.route_id = :route_id")
-    Route findByRouteId(Long route_id);
-    Boolean existsByRouteId(Long route_id);
+    Route findByRouteId(String route_id);
+    Boolean existsByRouteId(String route_id);
 }

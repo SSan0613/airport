@@ -35,7 +35,7 @@ public class CommentController {
 
     //의견 달기 클릭 시 해당 경로의 모든 댓글 조회
     @GetMapping("/{route_id}")
-    public ResponseEntity<?> getRouteComments(@PathVariable("route_id") Long route_id) {
+    public ResponseEntity<?> getRouteComments(@PathVariable("route_id") String route_id) {
         String useremail = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         log.info(String.valueOf(route_id));
         try {
@@ -48,7 +48,7 @@ public class CommentController {
 
     //경로에 의견 달기
     @PostMapping("/{route_id}")
-    public ResponseEntity<?> postComment(@PathVariable("route_id") Long routeId, @Valid @RequestBody CommentRequest commentRequest,BindingResult bindingResult) {
+    public ResponseEntity<?> postComment(@PathVariable("route_id") String routeId, @Valid @RequestBody CommentRequest commentRequest,BindingResult bindingResult) {
         if (bindingResult.hasFieldErrors()) {
             String errorMessage = bindingResult.getFieldErrors().get(0).getDefaultMessage();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", errorMessage));
@@ -95,7 +95,7 @@ public class CommentController {
 
     //경로에 추천
     @GetMapping("/{route_id}/recommend")
-    public ResponseEntity<Map<String, Object>> recommend(@PathVariable("route_id") Long routeId) {
+    public ResponseEntity<Map<String, Object>> recommend(@PathVariable("route_id") String routeId) {
         try {
             String useremail = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             Map<String, Object> response = commentService.recommendRoute(routeId, useremail);
@@ -108,7 +108,7 @@ public class CommentController {
 
     //경로에 비추천
     @GetMapping("/{route_id}/notrecommend")
-    public ResponseEntity<Map<String, Object>> notrecommend(@PathVariable("route_id") Long routeId) {
+    public ResponseEntity<Map<String, Object>> notrecommend(@PathVariable("route_id") String routeId) {
         try {
             String useremail = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             Map<String, Object> response = commentService.notRecommendRoute(routeId, useremail);

@@ -14,15 +14,15 @@ import lombok.RequiredArgsConstructor;
 public class Route {
     @Id
     @Column(name = "route_id")
-    private Long routeId;
+    private String routeId;
 
     @Column
     private String name;
 
-    public Route(Long routeId) {
+    public Route(String routeId) {
         this.routeId = routeId;
     }
-    public Route(Long routeId, String name) {
+    public Route(String routeId, String name) {
         this.routeId = routeId;
         this.name = name;
     }

@@ -14,10 +14,10 @@ import java.util.Optional;
 public interface VoteRepository extends JpaRepository<Vote,Long> {
 
     @Query("SELECT SUM(v.positive) FROM Vote v WHERE v.route.routeId =:routeId")
-    Optional<Integer> findPositiveByRoute_id(@Param("routeId")Long routeId);
+    Optional<Integer> findPositiveByRoute_id(@Param("routeId")String routeId);
 
     @Query("SELECT SUM(v.negative) FROM Vote v WHERE v.route.routeId =:routeId")
-    Optional<Integer>  findNegativeByRoute_id(@Param("routeId")Long routeId);
+    Optional<Integer>  findNegativeByRoute_id(@Param("routeId")String routeId);
 
     Optional<Vote> findByUserAndRoute(User user, Route route);
 

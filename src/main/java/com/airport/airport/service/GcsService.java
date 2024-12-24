@@ -3,13 +3,14 @@ package com.airport.airport.service;
 import com.airport.airport.domain.Route;
 import com.airport.airport.repository.RouteRepository;
 import com.airport.airport.repository.VoteRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Storage;
 import com.opencsv.CSVReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -29,6 +30,9 @@ public class GcsService {
     private final Map<String, List<double[]>> linkCoordinatesMap = new ConcurrentHashMap<>();
     private final Map<String, List<String[]>> csvCache = new ConcurrentHashMap<>();
     private volatile boolean isCoordinatesLoaded = false;
+    // 법정동별 경로 정보를 캐싱
+    private final Map<String, Map<String, Object>> routeCache = new ConcurrentHashMap<>();
+    private volatile boolean isRoutesLoaded = false;
 
     @Autowired
     public GcsService(Storage storage, VoteRepository voteRepository, RouteRepository routeRepository) {
@@ -641,85 +645,78 @@ public class GcsService {
         return ca[i][j];
     }
 
+    private void loadRoutesIfNeeded() {
+        if (!isRoutesLoaded) {
+            synchronized (this) {
+                if (!isRoutesLoaded) {
+                    loadRoutes();
+                    isRoutesLoaded = true;
+                }
+            }
+        }
+    }
+    private void loadRoutes() {
+        try {
+            byte[] content = downloadFileFromGcs("pleaset", "analyzed_routes_real.json");
+
+
+            String jsonContent = new String(content, StandardCharsets.UTF_8);
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> allRoutes = mapper.readValue(jsonContent, new TypeReference<>() {});
+
+            allRoutes.forEach((dongCode, routeInfo) ->
+                    routeCache.put(dongCode, (Map<String, Object>) routeInfo));
+
+        } catch (Exception e) {
+            logger.error("Error loading routes: {}", e.getMessage());
+            throw new RuntimeException("Error loading routes", e);
+        }
+    }
 
 
     public Map<String, Object> getPopularRoutesToAirport(String dongCode) {
-        List<String[]> records = parseCsvFromGcs("pleaset", "1차합친파일.csv");
-        Map<String, List<String[]>> tripGroups = new HashMap<>();
-        int totalPopulation = 0;
-        for (String[] record : records.subList(1, records.size())) {
-            String tripNo = record[1];
-            if (!tripGroups.containsKey(tripNo) && record[record.length - 1].equals(dongCode)) {
-                if ("출발지".equals(record[4])) {
-                    totalPopulation++;
+
+        loadRoutesIfNeeded();
+        List<String[]> dongCodeMapping = parseCsvFromGcs("pleaset", "법정동코드목록.csv");
+        String dongName = findDongName(dongCode, dongCodeMapping);
+
+        Map<String, Object> routeData = routeCache.getOrDefault(dongCode, createEmptyResponse());
+        List<Map<String,Object>> patterns = (List<Map<String, Object>>) routeData.get("patterns");
+        int count=1;
+        for (Map<String, Object> pattern : patterns) {
+            String routeId = (String) pattern.get("route_id");
+            if (routeId != null) {
+                if (routeRepository.existsByRouteId(routeId)) {
+                    int positive = voteRepository.findPositiveByRoute_id(routeId).orElse(0);
+                    int negative = voteRepository.findNegativeByRoute_id(routeId).orElse(0);
+                    // 패턴에 업데이트
+                    pattern.put("positive", positive);
+                    pattern.put("negative", negative);
+                } else {
+                    // 추천수 초기화
+                    Route newRoute = new Route(routeId,dongName+" 경로 " + count++);
+                    routeRepository.save(newRoute);
+                    pattern.put("positive", 0);
+                    pattern.put("negative", 0);
                 }
             }
-            tripGroups.computeIfAbsent(tripNo, k -> new ArrayList<>()).add(record);
         }
-        Map<String, List<String[]>> validTrips = filterAndSortTrips(tripGroups, dongCode);
-        if (validTrips.isEmpty()) {
-            return Map.of(
-                    "routes", new ArrayList<>(),
-                    "totalPopulation", 0,
-                    "message", "해당 법정동에 대한 데이터가 없습니다."
-            );
+        routeCache.put(dongCode,routeData);
+        return routeData;
+    }
+
+    private String findDongName(String dongCode, List<String[]> dongCodeMapping) {
+        for (String[] strings : dongCodeMapping) {
+            if (strings[0].equals(dongCode)) {
+                return strings[3];
+            }
         }
-        List<RouteInfo> routes = validTrips.entrySet().stream()
-                .map(entry -> {
-                    List<Map<String, Object>> segments = createSegments(entry.getValue());
-                    int totalTime = calculateTotalTime(segments);
-                    String dongName = entry.getValue().stream()
-                            .filter(record -> "출발지".equals(record[4]))
-                            .map(record -> record[11]) // DPR_ADNG_NM 열 인덱스
-                            .findFirst()
-                            .orElse("Unknown");
-                    return new RouteInfo(entry.getKey(), segments, totalTime,dongName);
-                })
-                .collect(Collectors.toList());
-        if (routes.size() <= 1) {
+        return null;
+    }
 
-            return Map.of(
-                    "routes", routes.stream()
-                            .map(route -> {
-                                String tripNo =route.tripNo.replace("TRIP_","");
-                                String dongName = route.dongName;
-                                Long routeId = Long.valueOf(tripNo);
-
-                                if (!routeRepository.existsByRouteId(routeId)) {
-
-                                    Route newRoute = new Route(routeId,dongName+" 경로 1");
-                                    routeRepository.save(newRoute);
-                                }
-                                        int positive = voteRepository.findPositiveByRoute_id(routeId).orElse(0);
-                                        int negative = voteRepository.findNegativeByRoute_id(routeId).orElse(0);
-
-                                        return Map.of(
-                                                "routeId", "ROUTE_" + route.tripNo,
-                                                "segments", route.segments,
-                                                "frequency", 1,
-                                                "averageTime", route.totalTime,
-                                                "positive",positive,
-                                                "negative",negative
-                                        );
-                                    })
-                            .collect(Collectors.toList()),
-                    "totalPopulation", totalPopulation,
-                    "message", "데이터가 충분하지 않아 단일 경로만 반환합니다."
-            );
-        }
-        List<List<RouteInfo>> clusters = groupSimilarRoutes(routes);
-        List<Map<String, Object>> finalRoutes = createFinalRoutes(clusters);
-        if (finalRoutes.isEmpty()) {
-            return Map.of(
-                    "routes", new ArrayList<>(),
-                    "totalPopulation", totalPopulation,
-                    "message", "유사 경로를 찾을 수 없습니다."
-            );
-        }
-        return Map.of(
-                "routes", finalRoutes,
-                "totalPopulation", totalPopulation
-        );
+    private Map<String, Object> createEmptyResponse() {
+        Map<String, Object> stringObjectMap = null;
+        return stringObjectMap;
     }
 
     private Map<String, List<String[]>> filterAndSortTrips(
@@ -870,7 +867,7 @@ public class GcsService {
                     List<Map<String, Object>> adjustedSegments = adjustSegmentDurations(representative.segments, averageTime);
 
                     String tripNo =representative.tripNo.replace("TRIP_","");
-                    Long routeId = Long.valueOf(tripNo);
+                    String routeId = tripNo;
                     String dongName = representative.dongName;
 
 
